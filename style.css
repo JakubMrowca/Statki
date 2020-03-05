@@ -1,5 +1,15 @@
-td{
+td {
     text-align: center;
     width: 20px;
     height: 20px;
+}
+
+.plansza {
+    float: left;
+    margin: 20px;
+}
+
+.summary {
+    float: left;
+    margin: 20px;
 }

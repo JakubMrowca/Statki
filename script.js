@@ -31,11 +31,9 @@ var computerTable = [
 ];
 
 function start() {
-
-
     var board = document.querySelector("#yourBoard");
     createTable(yourBoardArray);
-    var button = document.querySelector("#button");
+    var button = document.querySelector("#start");
     button.addEventListener("click", function() {
         if (enoughtShips(yourBoardArray) == false) {
             alert("Nie poprawna ilość statków!")
@@ -43,20 +41,89 @@ function start() {
         } else
             startGame();
     });
-    generateBoard();
-    createComputerTable(computerTable);
+    var buttonClear = document.querySelector("#clear");
+    buttonClear.addEventListener("click", function() {
+        var yourBoardArray = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ];
+        if (document.contains(document.getElementById("playerTable"))) {
+            document.getElementById("playerTable").remove();
+        }
+        createTable(yourBoardArray);
+    });
     checkShipCondition(0, 0, 0, 0);
-
 }
 
+var moveHas;
+var tura = 1;
+
 function startGame() {
-    alert("Tura pierwsza! Ruch: Komputer");
+    generateBoard();
+    createComputerTable(computerTable);
+    var summarySelector = document.querySelector("#computerSummary");
+    summarySelector.style.display = "block";
+    summarySelector.style.marginLeft = "150px";
+
+    var textPDisable = document.querySelector("#selectShip").style.display = "none";
+    var textPEnable = document.querySelector("#hitShip").style.display = "block";
+    moveHas = randomWhoStart()
+    alert("Tura " + tura + " pierwsza! Ruch: " + moveHas);
+    if (moveHas == "Komputer")
+        computerMove();
+}
+
+function randomWhoStart() {
+    random = Math.floor(Math.random() * 10);
+    if (random >= 5)
+        return "Komputer";
+    else
+        return "Ty";
+}
+
+function computerMove() {
+    moveHas = "Komputer";
+    var randI = generateNumberNotBiggerThen(9);
+    var randJ = generateNumberNotBiggerThen(9);
+    var element = yourBoardArray[randI][randJ];
+    if (element == 1) {
+        var td = document.getElementById(randI + "_" + randJ);
+        td.style.backgroundColor = "red";
+        yourBoardArray[randI][randJ] = 2;
+        tura++;
+        alert("TRAFIONY! Tura " + tura + " Ruch Komputer")
+        computerMove();
+    }
+    if (element == 0) {
+        var td = document.getElementById(randI + "_" + randJ);
+        td.style.backgroundColor = "grey";
+        yourBoardArray[randI][randJ] = 3;
+        tura++;
+        alert("Pudło! Tura " + tura + " Twój Ruch")
+        nextMove();
+    }
+    if (element == 2 || element == 3) {
+        computerMove();
+    }
+}
+
+function nextMove() {
+    moveHas = "Ty";
+
 }
 
 function generateBoard() {
     var actualFourMast = fourMastCount;
     while (actualFourMast > 0) {
-        var randomStart = generateNumberNotBiggerThen(6)
+        var randomStart = generateNumberNotBiggerThen(5)
         if (isHorizontal()) {
             randomVertical = Math.floor(Math.random() * 10);
             for (let i = randomStart; i < randomStart + 4; i++) {
@@ -70,6 +137,69 @@ function generateBoard() {
         }
         actualFourMast--;
     }
+    var actualThreeMast = threeMastCount;
+    while (actualThreeMast > 0) {
+        var randomStart = generateNumberNotBiggerThen(6);
+        if (isHorizontal()) {
+            randomVertical = Math.floor(Math.random() * 10);
+            if (computerTable[randomVertical][randomStart] == 1)
+                continue;
+            if (computerTable[randomVertical][randomStart + 3] == 1)
+                continue;
+            let result = isGoodArea({ index: randomVertical, jndex: randomStart }, { index: randomVertical, jndex: randomStart + 3 }, computerTable)
+            if (result != false) {
+                for (let i = randomStart; i < randomStart + 3; i++) {
+                    computerTable[randomVertical][i] = 1;
+                }
+                actualThreeMast--;
+            }
+        } else {
+            randomHorizont = Math.floor(Math.random() * 10);
+            if (computerTable[randomStart][randomHorizont] == 1)
+                continue;
+            if (computerTable[randomStart + 3][randomHorizont] == 1)
+                continue;
+            let result = isGoodArea({ index: randomStart, jndex: randomHorizont }, { index: randomStart + 3, jndex: randomHorizont }, computerTable)
+            if (result != false) {
+                for (let i = randomStart; i < randomStart + 3; i++) {
+                    computerTable[i][randomHorizont] = 1;
+                }
+                actualThreeMast--;
+            }
+        }
+    }
+    var actualTwoMast = twoMastCount;
+    while (actualTwoMast > 0) {
+        var randomStart = generateNumberNotBiggerThen(7);
+        if (isHorizontal()) {
+            randomVertical = Math.floor(Math.random() * 10);
+            if (computerTable[randomVertical][randomStart] == 1)
+                continue;
+            if (computerTable[randomVertical][randomStart + 2] == 1)
+                continue;
+            let result = isGoodArea({ index: randomVertical, jndex: randomStart }, { index: randomVertical, jndex: randomStart + 2 }, computerTable)
+            if (result != false) {
+                for (let i = randomStart; i < randomStart + 2; i++) {
+                    computerTable[randomVertical][i] = 1;
+                }
+                actualTwoMast--;
+            }
+        } else {
+            randomHorizont = Math.floor(Math.random() * 10);
+            if (computerTable[randomStart][randomHorizont] == 1)
+                continue;
+            if (computerTable[randomStart + 2][randomHorizont] == 1)
+                continue;
+            let result = isGoodArea({ index: randomStart, jndex: randomHorizont }, { index: randomStart + 2, jndex: randomHorizont }, computerTable)
+            if (result != false) {
+                for (let i = randomStart; i < randomStart + 2; i++) {
+                    computerTable[i][randomHorizont] = 1;
+                }
+                actualTwoMast--;
+            }
+        }
+    }
+
     var actualOneMast = oneMastCount;
     while (actualOneMast > 0) {
         let randomHorizont = generateNumberNotBiggerThen(10);
@@ -77,7 +207,7 @@ function generateBoard() {
         if (computerTable[randomVertical][randomHorizont] == 1)
             continue;
 
-        result = isGoodArea({ index: randomVertical, jndex: randomHorizont }, { index: randomVertical + 1, jndex: randomHorizont }, computerTable)
+        let result = isGoodArea({ index: randomVertical, jndex: randomHorizont }, { index: randomVertical + 1, jndex: randomHorizont }, computerTable)
         if (result != false) {
 
             computerTable[randomVertical][randomHorizont] = 1;
@@ -87,9 +217,37 @@ function generateBoard() {
             actualOneMast--;
         }
     }
+
 }
 
 function isGoodArea(start, end, table) {
+    var direction;
+    var directionText;
+    var distanceHorizontal = end.jndex - start.jndex;
+    var distanceVertical = end.index - start.index;
+
+    if (distanceHorizontal > distanceVertical) {
+        direction = distanceHorizontal;
+        directionText = "horizontal";
+    } else {
+        direction = distanceVertical;
+        directionText = "vertical";
+    }
+
+    var toCheck = start;
+    for (let w = 0; w < direction; w++) {
+        var result = checkAreaForSingle(toCheck, table)
+        if (result == false)
+            return false;
+        if (directionText == "horizontal")
+            toCheck = { index: toCheck.index, jndex: toCheck.jndex + 1 };
+        else
+            toCheck = { index: toCheck.index + 1, jndex: toCheck.jndex };
+
+    }
+}
+
+function checkAreaForSingle(start, table) {
     var jlength = table[start.index].length;
     if (start.jndex + 1 <= jlength) {
         var nextElHorizont = table[start.index][start.jndex + 1];
@@ -168,6 +326,7 @@ function createTable(tableData) {
             let cell = document.createElement('td');
             cell.style.border = "1px solid black";
             cell.style.backgroundColor = "white";
+            cell.id = i + "_" + j;
             cell.addEventListener("click", function() {
                 var value = tableData[i][j];
 
@@ -188,7 +347,9 @@ function createTable(tableData) {
 
     }
     table.appendChild(tableBody);
-    document.body.appendChild(table);
+    table.id = "playerTable";
+    var tableSelector = document.querySelector("#yourBoard");
+    tableSelector.appendChild(table);
 }
 
 function createComputerTable(tableData) {
@@ -200,16 +361,32 @@ function createComputerTable(tableData) {
             let cell = document.createElement('td');
             cell.style.border = "1px solid black";
             cell.style.backgroundColor = "white";
+            cell.addEventListener("click", function() {
+                if (moveHas == "Komputer")
+                    return;
+
+                if (tableData[i][j] == 1) {
+                    cell.style.backgroundColor = "blue";
+                    tableData[i][j] = 2
+                    tura++
+                    alert("TRAFIONY! Tura " + tura + " Twój ruch")
+                    nextMove();
+                } else {
+                    cell.style.backgroundColor = "grey";
+                    tableData[i][j] = 3
+                    tura++
+                    alert("Pudło! Tura " + tura + " Ruch Komputer")
+                    computerMove();
+                }
+            });
             cell.innerHTML = [tableData[i][j]]
-            if (tableData[i][j] == 1) {
-                cell.style.backgroundColor = "blue";
-            }
             row.appendChild(cell);
         }
         tableBody.appendChild(row);
     }
     table.appendChild(tableBody);
-    document.body.appendChild(table);
+    var tableSelector = document.querySelector("#computerBoard");
+    tableSelector.appendChild(table);
 }
 
 function canMarkShip(table, i, j) {
