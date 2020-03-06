@@ -1,10 +1,20 @@
+//skrypt czeka az plik HTML będzie gotowy(załaduje się). Kiedy HTML będzie gotowy uruchomiona zostanie funkcja start
 window.addEventListener("DOMContentLoaded", start);
 
+//Deklaracja zmiennych globalnych
+var maxComputerTry = 30;
+var computerTry = 0;
 var fourMastCount = 1;
 var threeMastCount = 2;
 var twoMastCount = 3;
 var oneMastCount = 4;
+var moveHistory = [];
+var computersSunkShip = 0;
+var playersSunkShip = 0;
+var lastComputerMove = null;
+var lastComputerDirectory = null;
 
+//Czysta tablica gracz
 var yourBoardArray = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -17,6 +27,8 @@ var yourBoardArray = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
+
+//Czysta tablica komputer
 var computerTable = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -30,19 +42,25 @@ var computerTable = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
+//Funkcja uruchamiana po załadowaniu strony
 function start() {
-    var board = document.querySelector("#yourBoard");
+
+    //funkcja tworzy wizualną tabele gracza na podstawie tablicy dwu wymiarowej yourBoardArray
     createTable(yourBoardArray);
+
+    //pobranie elementu (przycisku) z pliku html o id = start;
     var button = document.querySelector("#start");
+    //dodanie do przycisku reakcji na zdarzenie clikc
     button.addEventListener("click", function() {
         if (enoughtShips(yourBoardArray) == false) {
             alert("Nie poprawna ilość statków!")
             return;
         } else
-            startGame();
+            startGame(); // Jeśli ilość statków jest poprawna rozpocznij rozgrywke
     });
     var buttonClear = document.querySelector("#clear");
     buttonClear.addEventListener("click", function() {
+        //czyszczenie tablicy
         var yourBoardArray = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -60,6 +78,7 @@ function start() {
         }
         createTable(yourBoardArray);
     });
+    //sprawdzenie i ustawienie liczby wymaganych do rozmieszczenia statków
     checkShipCondition(0, 0, 0, 0);
 }
 
@@ -67,60 +86,234 @@ var moveHas;
 var tura = 1;
 
 function startGame() {
+    //zostaje wygenerowana tablica dwuwymiarowa przez algorytm
     generateBoard();
+    //na podstawie wygenerowanej tablicy dwuwymiarowej zostaje utworzona tabela wizualna dla komputera
     createComputerTable(computerTable);
-    var summarySelector = document.querySelector("#computerSummary");
-    summarySelector.style.display = "block";
-    summarySelector.style.marginLeft = "150px";
 
-    var textPDisable = document.querySelector("#selectShip").style.display = "none";
-    var textPEnable = document.querySelector("#hitShip").style.display = "block";
+
+    var summarySelector = document.querySelector("#computerSummary");
+    //odkrywanie elementu na stronie, któru wcześniej był ukryty
+    summarySelector.style.display = "block";
+    summarySelector.style.marginLeft = "180px";
+
+    //ukrycie już nie potrzebnych elementów na stronie
+    document.querySelector("#selectShip").style.display = "none";
+    document.querySelector("#oneMast").style.display = "none";
+    document.querySelector("#twoMast").style.display = "none";
+    document.querySelector("#threeMast").style.display = "none";
+    document.querySelector("#fourMast").style.display = "none";
+
+
+    document.querySelector("#hitShip").style.display = "block";
+
+    //losowanie kto zaczyna
     moveHas = randomWhoStart()
-    alert("Tura " + tura + " pierwsza! Ruch: " + moveHas);
-    if (moveHas == "Komputer")
-        computerMove();
+
+    //wyłączenie przycisków
+    var btnStart = document.querySelector("#start");
+    btnStart.disabled = true;
+    var btnClear = document.querySelector("#clear");
+    btnClear.disabled = true;
+    //funkcja informuje o statusie rozgrywki, pokazuje informacje o turze, kolejnym ruchu oraz o tym czy było pudło
+    viewStatus("ZACZYNAMY!", moveHas);
+}
+
+function viewStatus(message, ruch) {
+    var currentMoveSelector = document.querySelector("#currentMove");
+    if (message != "ZACZYNAMY!") {
+        //to tabeli z historią rozgrywki zostaje dorzucony nowy element
+        moveHistory.push({ tura: tura, move: moveHas, message: message });
+        var status = document.querySelector("#status");
+        status.innerHTML = "";
+        //wizualne utworzenie na stronie histori rozgrywki
+        for (var history of moveHistory) {
+            var turaSelector = document.createElement('p');
+            turaSelector.innerHTML = "Tura: " + history.tura;
+            var moveSelector = document.createElement('p');
+            moveSelector.innerHTML = "Ruch: " + history.move;
+            var messageSelector = document.createElement('h4');
+            messageSelector.innerHTML = history.message;
+
+            status.appendChild(messageSelector);
+            status.appendChild(turaSelector);
+            status.appendChild(moveSelector);
+        }
+        status.scrollTop = status.scrollHeight;
+        tura++;
+        moveHas = ruch;
+        var sunkSelector = document.querySelector("#sunkShip");
+        sunkSelector.innerHTML = computersSunkShip;
+        var sunkPlayerSelector = document.querySelector("#sunkShipPlayer");
+        sunkPlayerSelector.innerHTML = playersSunkShip;
+        //sprawdzenie ile statków zostało zatopionych wygra ten, który pierwszy zatopi 10 statków
+        if (playersSunkShip >= 10) {
+            currentMoveSelector.innerHTML = "Koniec! Wygrywa komputer";
+            return;
+        } else if (computersSunkShip >= 10) {
+            currentMoveSelector.innerHTML = "Koniec! Wygrywa gracz";
+            return;
+        }
+    }
+    currentMoveSelector.innerHTML = "Teraz ruch wykonuje: " + moveHas;
+
+    //jeśli gra komputer zaczekaj sekunde przed kolejnym ruchem
+    if (moveHas == "Komputer") {
+        setTimeout(computerMove, 1000);
+    } else {
+        nextMove();
+    }
 }
 
 function randomWhoStart() {
+    //zostaje wylosowana liczba od 0 do 1 i pomnożona przez 10
     random = Math.floor(Math.random() * 10);
     if (random >= 5)
         return "Komputer";
     else
-        return "Ty";
+        return "Gracz";
 }
 
 function computerMove() {
-    moveHas = "Komputer";
-    var randI = generateNumberNotBiggerThen(9);
-    var randJ = generateNumberNotBiggerThen(9);
+    var randI;
+    var randJ;
+    var directory;
+
+    //Mechanizm odpowiedzialny za zawężenie szuaknia statków po tym jak komputer trafi ale nie zatopi statku
+    if (lastComputerMove != null && maxComputerTry > computerTry) {
+        if (lastComputerDirectory == null)
+            directory = isHorizontal(); // funkcja ta zwraca losowo albo true albo false
+        else
+            directory = lastComputerDirectory;
+
+        if (directory == true) {
+            randI = lastComputerMove.index;
+            var left = isHorizontal();
+            if (left) {
+                if (computerTry < 15) {
+                    randJ = lastComputerMove.jndex + 1;
+                } else {
+                    randJ = lastComputerMove.jndex + generateNumberNotBiggerThen(3);
+                }
+            } else {
+                if (computerTry < 15) {
+                    randJ = lastComputerMove.jndex - 1;
+                } else {
+                    randJ = lastComputerMove.jndex - generateNumberNotBiggerThen(3);
+                }
+            }
+        } else {
+            randJ = lastComputerMove.jndex;
+            var up = isHorizontal();
+            if (up) {
+                if (computerTry < 15)
+                    randI = lastComputerMove.index + 1;
+                else
+                    randI = lastComputerMove.index + generateNumberNotBiggerThen(3);
+            } else {
+                if (computerTry < 15)
+                    randI = lastComputerMove.index - 1;
+                else
+                    randI = lastComputerMove.index - generateNumberNotBiggerThen(3);
+            }
+        }
+        computerTry++;
+
+    } else {
+        // wylosowanie losowego pola na tablicy
+        randI = generateNumberNotBiggerThen(9);
+        randJ = generateNumberNotBiggerThen(9);
+        computerTry = 0;
+    }
+    if (randI > 9 || randI < 0) {
+        randI = generateNumberNotBiggerThen(9);
+    }
+    if (randJ > 9 || randJ < 0) {
+        randJ = generateNumberNotBiggerThen(9);
+    }
     var element = yourBoardArray[randI][randJ];
     if (element == 1) {
         var td = document.getElementById(randI + "_" + randJ);
         td.style.backgroundColor = "red";
         yourBoardArray[randI][randJ] = 2;
-        tura++;
-        alert("TRAFIONY! Tura " + tura + " Ruch Komputer")
-        computerMove();
+        //sprawdzenie czy trafiony statek nie zostal zatopiony (czyli wszystkie jego pola są zniszoncze)
+        var sunk = detectShipSunk(randI, randJ, yourBoardArray);
+
+        var message = "";
+        if (sunk) {
+            message = " Zatopiony!"
+            lastComputerMove = null;
+            playersSunkShip++;
+            lastComputerDirectory = null;
+        } else {
+            if (lastComputerMove != null) {
+                lastComputerDirectory = directory;
+            }
+            lastComputerMove = { index: randI, jndex: randJ };
+        }
+        viewStatus("TRAFIONY!" + message, "Komputer")
     }
     if (element == 0) {
         var td = document.getElementById(randI + "_" + randJ);
         td.style.backgroundColor = "grey";
         yourBoardArray[randI][randJ] = 3;
-        tura++;
-        alert("Pudło! Tura " + tura + " Twój Ruch")
-        nextMove();
+        viewStatus("PUDŁO!", "Gracz")
     }
-    if (element == 2 || element == 3) {
+    if (element != 0 && element != 1) {
         computerMove();
     }
 }
 
+function detectShipSunk(index, jndex, table) {
+    var resutl = false
+    var jlength = table[index].length;
+    var ilength = table.length;
+    for (let i = jndex; i < jlength; i++) {
+        let element = table[index][i];
+        if (element == 1)
+            return false;
+        if (element == 0 || element == 3) {
+            resutl = true
+            break;
+        }
+    }
+    for (let i = jndex; i > 0; i--) {
+        let element = table[index][i];
+        if (element == 1)
+            return false;
+        if (element == 0 || element == 3) {
+            resutl = true
+            break;
+        }
+    }
+    for (let i = index; i < ilength; i++) {
+        let element = table[i][jndex];
+        if (element == 1)
+            return false;
+        if (element == 0 || element == 3) {
+            resutl = true
+            break;
+        }
+    }
+    for (let i = index; i > 0; i--) {
+        let element = table[i][jndex];
+        if (element == 1)
+            return false;
+        if (element == 0 || element == 3) {
+            resutl = true
+            break;
+        }
+    }
+    return resutl;
+}
+
 function nextMove() {
-    moveHas = "Ty";
 
 }
 
 function generateBoard() {
+    //alogyrm probuje rozstawić statki tak aby nie nachodziły na siebie
+    //losowo zostaje wybrany początek statku oraz kierunek w którym statek zostanie ułożonu
     var actualFourMast = fourMastCount;
     while (actualFourMast > 0) {
         var randomStart = generateNumberNotBiggerThen(5)
@@ -146,6 +339,7 @@ function generateBoard() {
                 continue;
             if (computerTable[randomVertical][randomStart + 3] == 1)
                 continue;
+            //funkcja isGoodArea sprawdza czy można na wylosowanym obszarze umieścić statek, jeśli nie losuje znowu
             let result = isGoodArea({ index: randomVertical, jndex: randomStart }, { index: randomVertical, jndex: randomStart + 3 }, computerTable)
             if (result != false) {
                 for (let i = randomStart; i < randomStart + 3; i++) {
@@ -211,8 +405,6 @@ function generateBoard() {
         if (result != false) {
 
             computerTable[randomVertical][randomHorizont] = 1;
-            console.log(randomVertical)
-            console.log(randomHorizont)
 
             actualOneMast--;
         }
@@ -329,7 +521,9 @@ function createTable(tableData) {
             cell.id = i + "_" + j;
             cell.addEventListener("click", function() {
                 var value = tableData[i][j];
-
+                //dla każdej komórki tabeli gracza zostaje dodana reakcja na zdarzenie click
+                //jeśli można oznaczyć komórkie statkiem zmień kolor na zielony
+                // zawsze sprawdzana jest też liczba statków (czy nie za dużo)
                 if (value == 0 && canMarkShip(tableData, i, j)) {
 
                     tableData[i][j] = 1;
@@ -364,22 +558,25 @@ function createComputerTable(tableData) {
             cell.addEventListener("click", function() {
                 if (moveHas == "Komputer")
                     return;
-
+                // zostaje dodana reakcja po kliknieciu przez gracza na komórke tabli komputera
+                // jeśli jest statek zmien kolor na niebieski i sprawdź czy statek nie został zatopiony
+                //jeśli trafisz kontunujesz ruch w przeciwnym przypadku ruch ma komputer
                 if (tableData[i][j] == 1) {
                     cell.style.backgroundColor = "blue";
                     tableData[i][j] = 2
-                    tura++
-                    alert("TRAFIONY! Tura " + tura + " Twój ruch")
-                    nextMove();
-                } else {
+                    var message = ""
+                    if (detectShipSunk(i, j, computerTable)) {
+                        message = " Zatopiony!"
+                        computersSunkShip++;
+                    }
+                    viewStatus("TRAFIONY!" + message, "Gracz")
+                } else if (tableData[i][j] == 0) {
                     cell.style.backgroundColor = "grey";
                     tableData[i][j] = 3
-                    tura++
-                    alert("Pudło! Tura " + tura + " Ruch Komputer")
-                    computerMove();
+                    viewStatus("PUDŁO!", "Komputer")
                 }
             });
-            cell.innerHTML = [tableData[i][j]]
+
             row.appendChild(cell);
         }
         tableBody.appendChild(row);
@@ -432,12 +629,12 @@ function canMarkShip(table, i, j) {
     return true;
 
 }
-
+// funkcja sprawdza czy statek nie jest za długi
 function notToLong(startI, startJ, board) {
     var jlength = board[startI].length;
     count = 1;
     for (let i = startJ; i < jlength; i++) {
-        if (i + 1 <= jlength) {
+        if (i + 1 < jlength) {
             let nEl = board[startI][i + 1];
             if (nEl == 1)
                 count++
@@ -460,7 +657,7 @@ function notToLong(startI, startJ, board) {
         return false;
     count = 1;
     for (let i = startI; i < board.length; i++) {
-        if (i + 1 <= board.length) {
+        if (i + 1 < board.length) {
             let nEl = board[i + 1][startJ];
             if (nEl == 1) {
                 count++

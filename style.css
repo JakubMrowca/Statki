@@ -13,3 +13,27 @@ td {
     float: left;
     margin: 20px;
 }
+
+#status {
+    clear: both;
+    margin: 20px;
+    height: 200px;
+    overflow-x: hidden;
+    overflow-y: visible;
+}
+
+#status p {
+    margin: 0px;
+    font-size: 14px;
+}
+
+#status h4 {
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+#currentMove {
+    clear: both;
+    margin-left: 20px;
+    font-size: 20px;
+}

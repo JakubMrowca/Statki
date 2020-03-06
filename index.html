@@ -10,20 +10,17 @@
     <div class="summary">
         <h1>Statki</h1>
         <p id="selectShip">Ustaw swoje statki</p>
-        <p style="display: none;" id="hitShip">Trafione twoje</p>
-        <p>Jedno masztowce: <strong id="oneMastSelector"></strong></p>
-        <p>Dwu masztowce: <strong id="twoMastSelector"></strong></p>
-        <p>Trzy masztowce: <strong id="threeMastSelector"></strong></p>
-        <p>Cztero masztowce: <strong id="fourMastSelector"></strong></p>
+        <p style="display: none;" id="hitShip">Zatopione twoje: <strong id="sunkShipPlayer"></strong></p>
+        <p id="oneMast">Jedno masztowce: <strong id="oneMastSelector"></strong></p>
+        <p id="twoMast">Dwu masztowce: <strong id="twoMastSelector"></strong></p>
+        <p id="threeMast">Trzy masztowce: <strong id="threeMastSelector"></strong></p>
+        <p id="fourMast">Cztero masztowce: <strong id="fourMastSelector"></strong></p>
     </div>
     <div id="computerSummary" style="display:none" class="summary" style="margin-left: 150px;">
         <h1>Statki wroga</h1>
-        <!-- <p>Trafione przeciwnika</p>
-        <p>Jedno masztowce: <strong id="oneMastHit"></strong></p>
-        <p>Dwu masztowce: <strong id="twoMastHit"></strong></p>
-        <p>Trzy masztowce: <strong id="threeMastHit"></strong></p>
-        <p>Cztero masztowce: <strong id="fourMastHit"></strong></p> -->
+        <p>Zatopione przeciwnika: <strong id="sunkShip"></strong></p>
     </div>
+    <div id="currentMove"></div>
     <div style="clear: both;">
         <div id="yourBoard" class="plansza">
             <button id='start' type="button">Zatwierdź</button>
@@ -31,6 +28,8 @@
         </div>
         <div id="computerBoard" style="padding-top: 20px;" class="plansza">
         </div>
+    </div>
+    <div id="status">
     </div>
 
 </body>
