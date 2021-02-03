@@ -11,6 +11,7 @@ var oneMastCount = 4;
 var moveHistory = [];
 var computersSunkShip = 0;
 var playersSunkShip = 0;
+var gameIsConfirmed = false;
 var lastComputerMove = null;
 var lastComputerDirectory = null;
 
@@ -88,6 +89,7 @@ var tura = 1;
 function startGame() {
     //zostaje wygenerowana tablica dwuwymiarowa przez algorytm
     generateBoard();
+    gameIsConfirmed = true;
     //na podstawie wygenerowanej tablicy dwuwymiarowej zostaje utworzona tabela wizualna dla komputera
     createComputerTable(computerTable);
 
@@ -254,14 +256,62 @@ function computerMove() {
         viewStatus("TRAFIONY!" + message, "Komputer")
     }
     if (element == 0) {
-        var td = document.getElementById(randI + "_" + randJ);
-        td.style.backgroundColor = "grey";
-        yourBoardArray[randI][randJ] = 3;
-        viewStatus("PUDŁO!", "Gracz")
+        if (isUnrealFieldToMark(randI, randJ, yourBoardArray) == false) {
+            var td = document.getElementById(randI + "_" + randJ);
+            td.style.backgroundColor = "grey";
+            yourBoardArray[randI][randJ] = 3;
+            viewStatus("PUDŁO!", "Gracz")
+        } else
+            computerMove();
     }
     if (element != 0 && element != 1) {
         computerMove();
     }
+}
+
+function isUnrealFieldToMark(randI, randJ, yourBoardArray) {
+    var result = false;
+    if (randI + 1 < yourBoardArray.length) {
+        let element = yourBoardArray[randI + 1][randJ];
+        if (element == 2)
+            result = detectShipSunk(randI + 1, randJ, yourBoardArray);
+    }
+    if (result == false && randI - 1 > 0) {
+        let element = yourBoardArray[randI - 1][randJ];
+        if (element == 2)
+            result = detectShipSunk(randI - 1, randJ, yourBoardArray)
+    }
+    if (result == false && randJ + 1 < yourBoardArray[randI].length) {
+        let element = yourBoardArray[randI][randJ + 1];
+        if (element == 2)
+            result = detectShipSunk(randI, randJ + 1, yourBoardArray)
+    }
+    if (result == false && randJ - 1 > 0) {
+        let element = yourBoardArray[randI][randJ - 1];
+        if (element == 2)
+            result = detectShipSunk(randI, randJ - 1, yourBoardArray)
+    }
+    if (result == false && randJ - 1 > 0 && randI - 1 > 0) {
+        let element = yourBoardArray[randI - 1][randJ - 1];
+        if (element == 2)
+            result = detectShipSunk(randI - 1, randJ - 1, yourBoardArray)
+    }
+    if (result == false && randJ - 1 > 0 && randI + 1 < yourBoardArray.length) {
+        let element = yourBoardArray[randI + 1][randJ - 1];
+        if (element == 2)
+            result = detectShipSunk(randI + 1, randJ - 1, yourBoardArray)
+    }
+    if (result == false && randJ + 1 < yourBoardArray[randI].length && randI + 1 < yourBoardArray.length) {
+        let element = yourBoardArray[randI + 1][randJ + 1];
+        if (element == 2)
+            result = detectShipSunk(randI + 1, randJ + 1, yourBoardArray)
+    }
+    if (result == false && randJ + 1 < yourBoardArray[randI].length && randI - 1 > 0) {
+        let element = yourBoardArray[randI - 1][randJ + 1];
+        if (element == 2)
+            result = detectShipSunk(randI - 1, randJ + 1, yourBoardArray)
+    }
+    return result;
 }
 
 function detectShipSunk(index, jndex, table) {
@@ -520,6 +570,9 @@ function createTable(tableData) {
             cell.style.backgroundColor = "white";
             cell.id = i + "_" + j;
             cell.addEventListener("click", function() {
+                if (gameIsConfirmed == true)
+                    return;
+
                 var value = tableData[i][j];
                 //dla każdej komórki tabeli gracza zostaje dodana reakcja na zdarzenie click
                 //jeśli można oznaczyć komórkie statkiem zmień kolor na zielony
